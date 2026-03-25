@@ -1,6 +1,8 @@
 require("dotenv").config();
 const fs = require("fs");
 const axios = require("axios");
+const { createLogFilesOnLoggerVM } = require("./createLogFilesOnLogger.js");
+const { createInstrumentQuoteLogs } = require("./logger.js");
 
 /****************************************
  * CONFIG
@@ -11,6 +13,8 @@ const config = {
 	entryExitOrderLogs: [],
 	logsFlusherInterval: 1000 * 60
 };
+
+const instrumentsSymbolMap = {};
 
 const INSTRUMENTS_CSV_PATH = "./instruments.csv";
 
@@ -766,9 +770,12 @@ function calculateSynthFut(expiryObj, indexPrice) {
 			? roundTo(expiryObj.atmStrike100 + ceBid - peOffer)
 			: null;
 
-	// synthAtmStrike = nearest strike to normal synth fut
+	// synthAtmStrike = nearest available strike MULTIPLE OF 100 to normal synth fut
 	if (isValidNumber(expiryObj.synth_fut_normal)) {
-		const nearestSynthStrike = getNearestStrike(expiryObj, expiryObj.synth_fut_normal);
+		const nearestSynthStrike = getNearestStrikeMultipleOf100(
+			expiryObj,
+			expiryObj.synth_fut_normal
+		);
 		expiryObj.synthAtmStrike = nearestSynthStrike ? nearestSynthStrike.value : null;
 	}
 }
@@ -850,6 +857,7 @@ function buildMarketObjectFromRows(rows, expiryIdentificationObj) {
 
 	for (const rawRow of rows) {
 		const instrument_type = String(rawRow.instrument_type || "").trim().toUpperCase();
+		instrumentsSymbolMap[rawRow.instrument_token] = rawRow.tradingsymbol;
 
 		if (instrument_type === "INDEX") {
 			marketObj.index.name = String(rawRow.index_name || rawRow.tradingsymbol || "").trim();
@@ -923,9 +931,38 @@ function buildMarketObjectFromCsv(csvPath, expiryIdentificationObj) {
 	return buildMarketObjectFromRows(rows, expiryIdentificationObj);
 }
 
+function getCurrTimeStamp() {
+	const currentDate = new Date();
+	const year = currentDate.getFullYear();
+	const month = padZero(currentDate.getMonth() + 1);
+	const day = padZero(currentDate.getDate());
+	const hours = padZero(currentDate.getHours());
+	const minutes = padZero(currentDate.getMinutes());
+	const seconds = padZero(currentDate.getSeconds());
+	const milliseconds = padZero2(currentDate.getMilliseconds());
+
+	const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+	return formattedDate;
+}
+
+function padZero(number) {
+	return number.toString().padStart(2, "0");
+}
+function padZero2(number) {
+	return number.toString().padStart(3, "0");
+}
+
 /****************************************
  * REFRESH / CALCULATE
  ****************************************/
+function createQuoteLogs(quoteData) {
+	const current_time = getCurrTimeStamp();
+	Object.keys(quoteData).forEach((key) => {
+		const symbol = instrumentsSymbolMap[key];
+		createInstrumentQuoteLogs(quoteData[key], current_time, symbol);
+	});
+}
+
 async function refreshSingleExpiry(marketObj, expiry, apiKey, accessToken) {
 	const expiryObj = marketObj.expiries[expiry];
 	if (!expiryObj) {
@@ -937,6 +974,7 @@ async function refreshSingleExpiry(marketObj, expiry, apiKey, accessToken) {
 		throw new Error(`Failed to fetch quotes for expiry ${expiry}`);
 	}
 
+	createQuoteLogs(quotesRes.data);
 	updateIndexPrices(marketObj, quotesRes.data);
 	updateExpiryPricesFromQuotes(expiryObj, quotesRes.data);
 
@@ -1051,6 +1089,7 @@ async function main() {
  ****************************************/
 (async () => {
 	try {
+		createLogFilesOnLoggerVM();
 		main();
 		config.logsFlusherInterval = setInterval(main, config.logsFlusherInterval);
 	} catch (error) {
