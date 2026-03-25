@@ -106,41 +106,41 @@ const premiumScenarioObj = {
 		},
 	},
 
-	// roll_weekly_2: {
-	// 	label: "Premium for rolling over 2 weeks",
-	// 	buy_leg: {
-	// 		name: "next_2_weekly_open",
-	// 		expiry_source: "expiry_tag",
-	// 		expiry_tag: "next_2_weekly",
-	// 		synth_side: "buy",
-	// 		strike_source: "synth_atm",
-	// 	},
-	// 	sell_leg: {
-	// 		name: "current_weekly_close",
-	// 		expiry_source: "position",
-	// 		position_key: "weekly",
-	// 		synth_side: "sell",
-	// 		strike_source: "position",
-	// 	},
-	// },
+	roll_weekly_2: {
+		label: "Premium for rolling over 2 weeks",
+		buy_leg: {
+			name: "next_2_weekly_open",
+			expiry_source: "expiry_tag",
+			expiry_tag: "next_2_weekly",
+			synth_side: "buy",
+			strike_source: "synth_atm",
+		},
+		sell_leg: {
+			name: "current_weekly_close",
+			expiry_source: "position",
+			position_key: "weekly",
+			synth_side: "sell",
+			strike_source: "position",
+		},
+	},
 
-	// roll_monthly_next: {
-	// 	label: "Premium for rolling monthly to next month",
-	// 	buy_leg: {
-	// 		name: "current_monthly_close",
-	// 		expiry_source: "position",
-	// 		position_key: "monthly",
-	// 		synth_side: "buy",
-	// 		strike_source: "position",
-	// 	},
-	// 	sell_leg: {
-	// 		name: "next_monthly_open",
-	// 		expiry_source: "expiry_tag",
-	// 		expiry_tag: "next_monthly",
-	// 		synth_side: "sell",
-	// 		strike_source: "synth_atm",
-	// 	},
-	// },
+	roll_monthly_next: {
+		label: "Premium for rolling monthly to next month",
+		buy_leg: {
+			name: "current_monthly_close",
+			expiry_source: "position",
+			position_key: "monthly",
+			synth_side: "buy",
+			strike_source: "position",
+		},
+		sell_leg: {
+			name: "next_monthly_open",
+			expiry_source: "expiry_tag",
+			expiry_tag: "next_monthly",
+			synth_side: "sell",
+			strike_source: "synth_atm",
+		},
+	},
 };
 
 /****************************************
